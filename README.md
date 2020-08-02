@@ -11,7 +11,7 @@ For this to work, two requirements need to be fulfilled:
    invalidation.
 2. The operation executed on `parameters.contiguous()` must not rely on shape
    information or statistics of the parameter as these would be computed on the
-   full buffer instead of each of the original paremters. For such operations,
+   full buffer instead of each of the original parameters. For such operations,
    keep using `parameters.original()`.
 
 
@@ -60,4 +60,4 @@ click load, and select the `*timeline.json` file.
 
 
 ## TODO
-[ ] Distributed training
+- [ ] Distributed training

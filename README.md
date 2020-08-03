@@ -14,6 +14,10 @@ For this to work, two requirements need to be fulfilled:
    full buffer instead of each of the original parameters. For such operations,
    keep using `parameters.original()`.
 
+## Install
+```
+pip install git+https://github.com/philjd/contiguous_pytorch_params.git
+```
 
 ## Example Usage
 ```

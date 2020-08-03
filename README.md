@@ -1,9 +1,11 @@
 # Contiguous Parameters for Pytorch.
-Accelerate training by copying all parameters into one contiguous buffer,
-resetting the parameters to be views into the buffer, and applying optimizer
-updates on the contiguous representation. Depending on the model, this can
-drastically reduce the time required for the optimizer's step function, e.g.,
-going from ~100ms for a ResNet50 update to ~1ms. 
+Launching Cuda kernels comes with a small overhead, resulting in low GPU utilization
+when launching numerous fast-returning kernels.
+This repo accelerates training by copying all parameters into one contiguous
+buffer, resetting the parameters to be views into the buffer, and applying
+optimizer updates on the contiguous representation. Depending on the model and 
+optimizer, this can drastically reduce the time required for the optimizer's step
+function by a factor of 40x-100x.
 
 For this to work, two requirements need to be fulfilled:
 1. The computation graph may only alter the parameters and gradients inplace.

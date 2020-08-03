@@ -20,7 +20,7 @@ pip install git+https://github.com/philjd/contiguous_pytorch_params.git
 ```
 
 ## Example Usage
-```
+```python
 import torch
 from torch import nn
 from contiguous_params import ContiguousParams

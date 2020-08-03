@@ -1,35 +1,42 @@
 """Code to compare optimizer step times and generate tracing timelines."""
 import torch
 from torch import nn
+from torch.autograd import profiler
 import time
 
 from copy import deepcopy
 
 from contiguous_params import ContiguousParams
 
+
 def benchmark_model(model, optimizer, parameters, name):
+    # Run 
     step_times = []
-    with torch.autograd.profiler.profile(use_cuda=(device == "cuda")) as profiler:
-        for i in range(15):
-            # Warm up for five steps, reset step_times after this.
-            if i == 5:
-                step_times = []
-            with torch.autograd.profiler.record_function("forward"):
-                loss = model(x).sum()
-            with torch.autograd.profiler.record_function("backward"):
-                loss.backward()
-            torch.cuda.synchronize()
-            start = time.time()
-            with torch.autograd.profiler.record_function("gradient_norm"):
-                 torch.nn.utils.clip_grad_norm_(parameters, 0.1)
-            with torch.autograd.profiler.record_function("step"):
-                optimizer.step()
-            with torch.autograd.profiler.record_function("zero_grad"):
-                optimizer.zero_grad()
-            torch.cuda.synchronize()
-            step_times.append(time.time() - start)
-        print(f"Mean step time: {sum(step_times) / 10} seconds.")
-    profiler.export_chrome_trace(f"{name}_timeline.json")
+    # Autograd profiler adds some overhead, so we time the forward pass with
+    # and without enabling it.
+    for profile_autograd in [False, True]:
+        with profiler.profile(enabled=profile_autograd, use_cuda=(device == "cuda")) as prof:
+            for i in range(15):
+                # Warm up for five steps, reset step_times after this.
+                if i == 5:
+                    step_times = []
+                with profiler.record_function("forward"):
+                    loss = model(x).sum()
+                with profiler.record_function("backward"):
+                    loss.backward()
+                torch.cuda.synchronize()
+                start = time.time()
+                with profiler.record_function("gradient_norm"):
+                    torch.nn.utils.clip_grad_norm_(parameters, 0.1)
+                with profiler.record_function("step"):
+                    optimizer.step()
+                with profiler.record_function("zero_grad"):
+                    optimizer.zero_grad()
+                torch.cuda.synchronize()
+                step_times.append(time.time() - start)
+            print(f"Mean step time: {sum(step_times) / 10} seconds. "
+                  f"(Autograd profiler enabled: {profile_autograd})")
+    prof.export_chrome_trace(f"{name}_timeline.json")
 
 
 if __name__ == "__main__":

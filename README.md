@@ -101,15 +101,14 @@ To take a look at the timeline, open chromium, navigate to `chrome://tracing/`,
 click load, and select the `*timeline.json` file.
 
 ## Distributed Data Parallel Training
-DDP training is a bit more tricky, as we need to make sure that the parameters
-for each replica are contiguous.
-To understand where we need to adapt our `nn.Module`, let's first recap how DDP
+Training with DDP is also easy, we just need to make sure that the parameters for each replica are contiguous.
+To understand where we should insert the ContiguousParams into our `nn.Module`, let's first recap how DDP
 works:
 1. Create the reference model.
 2. Replicate the model onto the respective devices.
 3. Wrap as DDP module. This creates hooks between gradients, ensuring that they
-   get synced across devices during `backward`. **Parameters can't be changed
-   after this step.**
+   get synced across devices during `backward`. Note: DDP does not allow Parameters to change
+   after this step.
 4. Initialize an optimizer for each device with the device's parameters. Each
    device calls `optimizer.step` for its own parameters but with the same
    gradients, due to syncing. This means we perform the same update on each

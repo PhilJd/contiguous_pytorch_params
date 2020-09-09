@@ -1,12 +1,20 @@
 # Contiguous Parameters for Pytorch
+
+Accelerate training by storing parameters in one contiguous chunk of memory.
+
 ## Speed up your optimizer with 3 lines of code! 
-This graphic shows a step trace comparison with and without contiguous params for a Resnet50 on Cifar10, using *Adam and gradient clipping*.
+This graphic shows a GPU step trace comparison with and without contiguous params for a Resnet50 on Cifar10, using *Adam and gradient clipping*.
 The upper trace is with the default optimizer, the trace below is with the parameter wrapper.
 ![Gradient norm + Adam](visualizations/adam_gradnorm_trace_comparison.png)
 
 Step trace comparison for a Resnet50 on Cifar10, using *SGD*. 
 ![Gradient norm + Adam](visualizations/sgd_trace_comparison.png)
 
+
+## What's the difference to Apex?
+Apex implements the full optimizer update in C++ and is limited to the supported
+optimizers. This wrapper allows to use any optimizer as long as it updates the
+parameters inplace.
 
 
 ## How does it work?
@@ -30,10 +38,10 @@ For this to work, two requirements need to be fulfilled:
    keep using `parameters.original()`.
 
 ## Disclaimer
-This is still a rather new project. If you encounter a bug, please file an issue
-if there is no matching existing issue! Also, if you find this project helpful,
-consider leaving a star to keep me motivated or spread the word and help people
-to train their models faster :)
+This is still a rather new project and considered experimental. If you encounter
+a bug, please file an issue if there is no matching existing issue! Also, if you
+find this project helpful, consider leaving a star to keep me motivated or spread
+the word and help people to train their models faster :)
 
 ## Install
 ```
@@ -53,7 +61,7 @@ model = nn.Sequential(nn.Linear(8, 8), nn.Linear(8, 8))
 parameters = ContiguousParams(model.parameters())  # <--- (1) Wrap parameters.
 
 # Use parameters.contiguous() instead of model.parameters() to initialize
-# the optimizer. Note that the optimize must update the parameters inplace.
+# the optimizer. Note that the optimizer must update the parameters inplace.
 optimizer = torch.optim.Adam(parameters.contiguous())    # <--- (2) Optimize view.
 
 # Run the training loop as usual.
@@ -67,6 +75,7 @@ for x in data:
     # !!!!!!!
     # Always make sure to call buffer_is_valid() at least once, to detect
     # if operations invalidated the buffer by overwriting/copying parameters.
+    # (Except when running in DDP mode, there the buffer check doesn't work.)
     # !!!!!!!
     parameters.assert_buffer_is_valid()  # <--- (3) Check that the optimizer only applies valid ops.
 ``` 
@@ -117,8 +126,10 @@ works:
    we would use only one device for computing `step`.
 
 This means, the contiguous parameters need to be created after step 2 but
-before step 3. The easiest way to do this is to wrap the `Module.cuda`
-and `Module.cpu` functions.
+before step 3. The easiest way to do this is to create your optimizer after
+moving the model to the desired device, otherwise you need to wrap the `Module.cuda`
+and `Module.cpu` functions and recreate the contiguous parameters there.
+Note: the buffer invalidation check currently doesn't work with DDP.
 
 Contiguous params work with pytorch_lightning's DDP implementation for versions > 0.9
 or on master after [this commit](https://github.com/PyTorchLightning/pytorch-lightning/commit/e3528afae3f178cf9d5d8ea6bc3f8a876646054a).

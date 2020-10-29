@@ -44,9 +44,14 @@ find this project helpful, consider leaving a star to keep me motivated or sprea
 the word and help people to train their models faster :)
 
 ## Install
+To get the most recent version, it's easiest to install the package directly from
+github:
 ```
 pip install git+https://github.com/philjd/contiguous_pytorch_params.git
 ```
+Alternatively, [frgfm](https://github.com/frgfm) has kindly created a pip package (`pip install contiguous-params`)
+and a conda package ` conda install -c frgfm contiguous_params`.
+
 
 ## Example Usage
 ```python
